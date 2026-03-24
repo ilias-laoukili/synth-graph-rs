@@ -1,11 +1,5 @@
-# Workspace root — two members:
-#   synth-graph-core  : Rust library (cdylib for Python, rlib for the CLI binary)
-#   synth-graph-cli   : Rust TUI binary (added by Wilfried during integration merge)
-#
-# Profile sections live here so they apply to every workspace member.
-
 [workspace]
-members = ["synth-graph-core"]
+members = ["synth-graph-core", "synth-graph-cli"]
 resolver = "2"
 
 [profile.release]
@@ -15,4 +9,4 @@ codegen-units = 1
 panic = "abort"
 
 [profile.dev]
-opt-level = 1   # faster incremental builds during dev
+opt-level = 1
