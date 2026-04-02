@@ -71,3 +71,43 @@ Revue du code avant rendu. Plusieurs corrections :
   Python exposées.
 - Ajout des doc comments sur toutes les fonctions et types (exigence du cours).
 - 36 tests unitaires pour couvrir les cas limites principaux.
+
+---
+
+## Intégration (après semaine 5)
+
+Restructuration du dépôt en workspace Cargo pour résoudre un conflit avec PyO3 :
+
+**Problème :** PyO3 avec la feature `extension-module` demande au linker de ne PAS
+lier `libpython` (correct pour un `.so`). Si on met un `[[bin]]` dans le même crate,
+le binaire ne compile plus. La solution est un workspace avec deux crates séparés.
+
+**Structure après refacto :**
+
+```
+synth-graph-rs/
+  Cargo.toml              ← workspace root (profiles ici)
+  synth-graph-core/       ← lib : cdylib (Python .so) + rlib (pour le CLI)
+    Cargo.toml
+    src/lib.rs
+  synth-graph-cli/        ← bin : TUI de Wilfried (ajouté lors du merge)
+    Cargo.toml
+    src/main.rs
+    src/config.rs
+```
+
+**Modifications dans `synth-graph-core/src/lib.rs` :**
+
+- `GraphOutput`, `Metadata`, `NodeJson`, `EdgeJson` passent de `struct` à `pub struct`
+  (champs `pub` aussi) pour que le module de visualisation puisse désérialiser un JSON
+  directement, sans passer par Python.
+
+- Ajout de `pub fn generate_from_config_native(config_json: &str) -> Result<String, String>` :
+  même logique que le `#[pyfunction] generate_from_config` existant, mais sans aucun
+  type PyO3. C'est l'unique point d'entrée que le CLI appelle. Le CLI ne touche jamais
+  à PyO3.
+
+**pyproject.toml :** ajout de `manifest-path = "synth-graph-core/Cargo.toml"` pour
+que maturin retrouve le crate après le déplacement.
+
+36 tests passent toujours après la refacto (`cargo test -p synth_graph_rs`).

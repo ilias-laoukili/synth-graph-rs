@@ -11,6 +11,21 @@ dependencies = [
     "numpy>=1.24",
 ]
 
+# Install python/synth_graph_rs/ alongside the compiled .so.
+# This gives users `from synth_graph_rs.pyg import sbm_to_pyg` etc.
+[tool.maturin.include]
+sources = ["python/synth_graph_rs"]
+
+[project.optional-dependencies]
+# pip install synth-graph-rs[pyg]  — adds PyG wrappers
+pyg = [
+    "torch>=2.0",
+    "torch_geometric>=2.4",
+]
+
 [tool.maturin]
 features = ["pyo3/extension-module"]
 module-name = "synth_graph_rs"
+# Point maturin at the sub-crate after the workspace restructure.
+# Without this, maturin would look for [lib] in the workspace root and fail.
+manifest-path = "synth-graph-core/Cargo.toml"
