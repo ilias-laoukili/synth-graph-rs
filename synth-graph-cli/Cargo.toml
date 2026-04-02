@@ -1,0 +1,16 @@
+[package]
+name = "synth-graph-cli"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "synth-graph"
+path = "src/main.rs"
+
+[dependencies]
+synth_graph_rs = { path = "../synth-graph-core", default-features = false }
+serde          = { version = "1", features = ["derive"] }
+serde_json     = "1"
+crossterm      = "0.29"
+inquire        = "0.9"
+ratatui        = "0.29"

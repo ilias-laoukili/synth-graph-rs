@@ -1,14 +1,19 @@
 use crossterm::style::Stylize;
 use inquire::{CustomType, Select, validator::Validation};
+use serde::Serialize;
 
 /// Represents the mathematical model chosen for graph generation.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum ModelType {
     /// Classic Stochastic Block Model
+    #[serde(rename = "sbm_classique")]
     SBM,
     /// Degree-Corrected Stochastic Block Model
+    #[serde(rename = "sbm")]
     DCSBM,
     /// Contextual Stochastic Block Model
+    #[serde(rename = "csbm")]
     CSBM,
 }
 
@@ -25,7 +30,7 @@ impl std::fmt::Display for ModelType {
 
 /// Graph generation parameters.
 /// Fields are kept private to enforce encapsulation.
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct Parameters {
     n_nodes: usize,
     n_communities: usize,
@@ -62,11 +67,25 @@ impl std::fmt::Display for RenderMode {
 }
 
 /// Complete configuration combining the model, its parameters and the render mode.
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct Config {
     model_type: ModelType,
+    #[serde(skip)]
     render_mode: RenderMode,
+    seed: Option<u64>,
     parameters: Parameters,
+}
+
+impl Config {
+    /// Convertit la configuration en JSON pour le moteur de génération.
+    pub fn to_json(&self) -> String {
+        serde_json::to_string_pretty(self).unwrap()
+    }
+
+    /// Récupère le mode de rendu choisi
+    pub fn render_mode(&self) -> &RenderMode {
+        &self.render_mode
+    }
 }
 
 /// Launches the interactive terminal interface to build the configuration.
@@ -169,6 +188,7 @@ pub fn prompt_config() -> Result<Config, inquire::InquireError> {
     Ok(Config {
         model_type,
         render_mode,
+        seed: None,
         parameters: Parameters {
             n_nodes,
             n_communities,
