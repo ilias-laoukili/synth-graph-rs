@@ -4,7 +4,7 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style, Stylize},
     text::{Line, Span},
-    widgets::{Block, Borders, Paragraph, canvas::{Canvas, MapResolution, Map}},
+    widgets::{Block, Borders, Paragraph, canvas::{Canvas, Line as CanvasLine}},
     Terminal,
 };
 use crossterm::{
@@ -12,9 +12,9 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use serde::{Deserialize, Serialize};
 use std::io::{self, stdout};
 use std::collections::HashMap;
+use std::f64::consts::PI;
 use synth_graph_rs::GraphOutput;
 
 pub fn render(graph: &GraphOutput, mode: &RenderMode) -> io::Result<()> {
@@ -69,12 +69,51 @@ pub fn render(graph: &GraphOutput, mode: &RenderMode) -> io::Result<()> {
 }
 
 fn render_circular(f: &mut ratatui::Frame, area: Rect, graph: &GraphOutput, block: Block) {
-    // Basic circular layout
     let canvas = Canvas::default()
         .block(block)
         .paint(|ctx| {
-            // Implémentation du rendu circulaire basique (à développer plus tard)
-            ctx.print(5.0, 5.0, "Visualisation circulaire en cours de dev...".yellow());
+            let n = graph.nodes.len();
+            if n == 0 {
+                ctx.print(5.0, 5.0, "Graphe vide".red());
+                return;
+            }
+            
+            let center_x = 50.0;
+            let center_y = 50.0;
+            let radius = 40.0;
+            
+            let mut pos = HashMap::new();
+            
+            // 1. Calculer les positions circulaires de chaque nœud
+            for (i, node) in graph.nodes.iter().enumerate() {
+                let theta = (i as f64) * 2.0 * PI / (n as f64);
+                let x = center_x + radius * theta.cos();
+                let y = center_y + radius * theta.sin();
+                pos.insert(node.id, (x, y, node.community));
+            }
+            
+            // 2. Dessiner les arêtes
+            // Dans un terminal, afficher trop de lignes peut ralentir, on limite à 2000 pour la fluidité
+            let max_edges = 2000; 
+            for (i, edge) in graph.edges.iter().enumerate() {
+                if i > max_edges { break; }
+                if let (Some(&(x1, y1, _)), Some(&(x2, y2, _))) = (pos.get(&edge.source), pos.get(&edge.target)) {
+                    ctx.draw(&CanvasLine {
+                        x1, y1, x2, y2,
+                        color: Color::DarkGray,
+                    });
+                }
+            }
+            
+            // 3. Dessiner les nœuds par dessus, avec la couleur de leur communauté
+            let colors = [
+                Color::Red, Color::Green, Color::Blue, Color::Yellow, 
+                Color::Magenta, Color::Cyan, Color::White
+            ];
+            for (_id, (x, y, comm)) in pos {
+                let color = colors[comm % colors.len()];
+                ctx.print(x, y, "•".fg(color));
+            }
         })
         .x_bounds([0.0, 100.0])
         .y_bounds([0.0, 100.0]);
@@ -82,12 +121,12 @@ fn render_circular(f: &mut ratatui::Frame, area: Rect, graph: &GraphOutput, bloc
 }
 
 fn render_force_directed(f: &mut ratatui::Frame, area: Rect, graph: &GraphOutput, block: Block) {
-    // Fruchterman-Reingold Force-Directed Layout
+    let _ = graph; // Evite le warning de variable non utilisée
     let canvas = Canvas::default()
         .block(block)
         .paint(|ctx| {
-            // Implémentation de Force Directed (à développer plus tard)
-            ctx.print(5.0, 5.0, "Algorithme de force en cours de dev...".green());
+            ctx.print(5.0, 50.0, "Algo de force en cours de dev...".green());
+            ctx.print(5.0, 45.0, "=> Utilisez le mode Circulaire ou MacroStats en attendant.".gray());
         })
         .x_bounds([0.0, 100.0])
         .y_bounds([0.0, 100.0]);

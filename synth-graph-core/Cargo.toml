@@ -19,8 +19,11 @@ description = "High-performance synthetic graph generation for GNN research (Rus
 name = "synth_graph_rs"
 crate-type = ["cdylib", "rlib"]
 
+[features]
+extension-module = ["pyo3/extension-module"]
+
 [dependencies]
-pyo3      = { version = "0.22", features = ["extension-module"] }
+pyo3      = { version = "0.22" }
 numpy     = "0.22"
 ndarray   = "0.16"
 rand      = "0.8"
