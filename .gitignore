@@ -1,1 +1,9 @@
+/target
+/.venv
+__pycache__/
+*.pyc
+*.pyd
+*.so
+*.egg-info/
+dist/
 roadmap.md

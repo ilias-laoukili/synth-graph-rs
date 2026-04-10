@@ -1,0 +1,12 @@
+[workspace]
+members = ["synth-graph-core", "synth-graph-cli"]
+resolver = "2"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+
+[profile.dev]
+opt-level = 1
