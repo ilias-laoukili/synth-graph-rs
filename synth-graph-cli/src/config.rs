@@ -1,3 +1,19 @@
+//! Configuration module for interactive graph generation parameters.
+//!
+//! This module provides:
+//! - `ModelType` — Enum representing available graph models (SBM, DC-SBM, cSBM)
+//! - `RenderMode` — Enum for visualization strategies (Basic, Force-Directed, MacroStats)
+//! - `Parameters` — Encapsulated graph generation parameters
+//! - `Config` — Complete configuration combining model, parameters, and render mode
+//! - `prompt_config()` — Interactive TUI for building configuration
+//!
+//! The workflow:
+//! 1. User selects model type via menu
+//! 2. User selects render mode via menu
+//! 3. User provides common parameters (n_nodes, n_communities, etc.)
+//! 4. Conditional parameters are collected based on model type
+//! 5. Configuration is returned and serialized to JSON
+
 use crossterm::style::Stylize;
 use inquire::{CustomType, Select, validator::Validation};
 use serde::Serialize;
@@ -89,6 +105,27 @@ impl Config {
 }
 
 /// Launches the interactive terminal interface to build the configuration.
+///
+/// # Workflow
+/// 1. Display title banner
+/// 2. Select model type (SBM, DC-SBM, cSBM)
+/// 3. Select render mode (Basic, Force-Directed, MacroStats)
+/// 4. Prompt for common parameters with validation
+/// 5. Based on model, collect model-specific parameters:
+///    - cSBM: features_dim, mu, feat_noise_ratio
+///    - DC-SBM: theta_exponent
+///    - Classic SBM: none
+///
+/// # Returns
+/// - `Ok(Config)` if all inputs are valid
+/// - `Err(inquire::InquireError)` if user cancels or input fails
+///
+/// # Parameters Collected
+/// - `n_nodes`: positive integer (default 100)
+/// - `n_communities`: positive integer (default 3)
+/// - `homophily`: float in [0.0, 1.0] (default 0.8)
+/// - `avg_degree`: positive float (default 5.0)
+/// - Model-specific parameters as outlined above
 pub fn prompt_config() -> Result<Config, inquire::InquireError> {
     println!("\n{}\n", "=== Graph Generation Interface ===".bold().cyan());
 
@@ -204,6 +241,13 @@ pub fn prompt_config() -> Result<Config, inquire::InquireError> {
 
 // --- Validation Helpers ---
 
+/// Validator for positive unsigned integers (> 0).
+///
+/// # Arguments
+/// - `error_msg`: Error message displayed if validation fails
+///
+/// # Returns
+/// A closure validator that checks if value > 0
 fn validate_pos_usize(
     error_msg: &'static str,
 ) -> impl inquire::validator::CustomTypeValidator<usize> {
@@ -216,6 +260,15 @@ fn validate_pos_usize(
     }
 }
 
+/// Validator for floats in a bounded range [min, max].
+///
+/// # Arguments
+/// - `min`: Minimum allowed value (inclusive)
+/// - `max`: Maximum allowed value (inclusive)
+/// - `error_msg`: Error message displayed if validation fails
+///
+/// # Returns
+/// A closure validator that checks if min ≤ value ≤ max
 fn validate_range_f64(
     min: f64,
     max: f64,
@@ -230,6 +283,15 @@ fn validate_range_f64(
     }
 }
 
+/// Validator for floats with a minimum bound.
+///
+/// # Arguments
+/// - `min`: Minimum allowed value
+/// - `error_msg`: Error message displayed if validation fails
+/// - `inclusive`: If true, value ≥ min is valid; if false, value > min is valid
+///
+/// # Returns
+/// A closure validator enforcing the minimum bound
 fn validate_min_f64(
     min: f64,
     error_msg: &'static str,
