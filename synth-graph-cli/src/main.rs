@@ -1,3 +1,24 @@
+//! Synth Graph CLI — Main entry point and orchestration.
+//!
+//! This binary provides an interactive terminal interface for generating
+//! and visualizing synthetic graphs (SBM, DC-SBM, cSBM).
+//!
+//! # Workflow
+//! 1. **Gather configuration** via interactive prompts (config module)
+//! 2. **Serialize to JSON** for the native generator
+//! 3. **Generate graph** using Rust native engine (synth_graph_rs)
+//! 4. **Save output** to `graph_output.json`
+//! 5. **Deserialize result** back to Rust structures
+//! 6. **Visualize** in terminal using Ratatui (visualise module)
+//!
+//! # Error Handling
+//! Errors at any step are caught and logged to stderr. The application
+//! continues gracefully with informative messages.
+//!
+//! # Output
+//! - `graph_output.json`: Generated graph in JSON format with metadata,
+//!   nodes (with community assignments and optional features), and edges.
+
 mod config;
 mod visualise;
 
@@ -5,7 +26,24 @@ use crate::config::prompt_config;
 use synth_graph_rs::generate_from_config_native;
 use crossterm::style::Stylize;
 
-/// Point d'entrée de l'application cliente d'interface (CLI)
+/// Entry point for the Synth Graph CLI application.
+///
+/// # Execution Steps
+/// 1. Call `prompt_config()` to launch interactive configuration UI
+/// 2. On success:
+///    - Serialize config to JSON
+///    - Print generated configuration to stdout
+///    - Call native generator via `generate_from_config_native()`
+///    - Write result to `graph_output.json`
+///    - Launch visualization with chosen render mode
+/// 3. On error at any step:
+///    - Print error message to stderr
+///    - Exit gracefully
+///
+/// # Dependencies
+/// - `config`: Interactive parameter collection
+/// - `visualise`: Terminal rendering
+/// - `synth_graph_rs`: Native graph generation engine
 fn main() {
     match prompt_config() {
         Ok(cfg) => {
